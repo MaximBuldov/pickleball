@@ -1,0 +1,85 @@
+name: Test & deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, pdo_mysql
+          tools: composer
+
+      - name: Backend tests
+        working-directory: backend
+        run: |
+          composer install --no-interaction --no-progress
+          vendor/bin/phpunit tests
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare release
+        run: |
+          (cd backend && composer install --no-dev --optimize-autoloader --no-interaction --no-progress)
+          mkdir -p release
+          cp -r frontend/dist release/web
+          cp -r deploy/api release/web/api
+          rsync -a --exclude tests --exclude var --exclude config.php --exclude .phpunit.cache backend/ release/backend/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: release
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload
+        env:
+          SSH: ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }}
+          TARGET: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+          WEB_ROOT: ${{ vars.WEB_ROOT || 'pickleball.buldov.com' }}
+        run: |
+          # Backend: config.php and var/ on the server are never touched
+          rsync -az --delete -e "$SSH" --exclude config.php --exclude var/ release/backend/ "$TARGET:pickleball-backend/"
+          # Frontend + API entry; keep cPanel's own folders
+          rsync -az --delete -e "$SSH" --exclude .well-known --exclude cgi-bin release/web/ "$TARGET:$WEB_ROOT/"
+
+      - name: Migrate database
+        run: |
+          ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "${{ vars.PHP_BIN || 'php' }} pickleball-backend/bin/migrate.php"
