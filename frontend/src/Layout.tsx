@@ -1,10 +1,21 @@
-import { BarChartOutlined, HistoryOutlined, LogoutOutlined, SettingOutlined, TrophyOutlined } from '@ant-design/icons'
+import { BarChartOutlined, HistoryOutlined, LogoutOutlined, ReloadOutlined, SettingOutlined, TrophyOutlined } from '@ant-design/icons'
 import { Button, Flex, Select, Typography } from 'antd'
+import { useCallback, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { refreshAll } from './hooks'
+import { PullToRefresh } from './PullToRefresh'
 import { useSession } from './session'
 
 export function Layout() {
-  const { user, groups, group, isAdmin, selectGroup, signOut } = useSession()
+  const { user, groups, group, isAdmin, selectGroup, signOut, reload } = useSession()
+  const [refreshing, setRefreshing] = useState(false)
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+    // Keep the spinner visible briefly so a fast refresh still registers.
+    await Promise.all([refreshAll(), reload(), new Promise((r) => setTimeout(r, 500))])
+    setRefreshing(false)
+  }, [reload])
 
   const tabs = [
     { to: '/', label: 'Today', icon: <TrophyOutlined /> },
@@ -37,9 +48,12 @@ export function Layout() {
           <Typography.Text type="secondary" ellipsis style={{ maxWidth: 110 }}>
             {user?.name}
           </Typography.Text>
+          <Button type="text" icon={<ReloadOutlined spin={refreshing} />} onClick={refresh} aria-label="Refresh" />
           <Button type="text" icon={<LogoutOutlined />} onClick={signOut} aria-label="Sign out" />
         </Flex>
       </header>
+
+      <PullToRefresh onRefresh={refresh} />
 
       <main className="app-main">
         {group ? (

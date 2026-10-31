@@ -27,7 +27,21 @@ export function useLoad<T>(load: () => Promise<T>, deps: unknown[]) {
     void reload()
   }, [reload])
 
+  useEffect(() => {
+    refreshers.add(reload)
+    return () => {
+      refreshers.delete(reload)
+    }
+  }, [reload])
+
   return { data, setData, loading, error, reload }
+}
+
+const refreshers = new Set<() => Promise<void>>()
+
+/** Refetches everything currently on screen (used by pull-to-refresh and the header button). */
+export async function refreshAll(): Promise<void> {
+  await Promise.all([...refreshers].map((reload) => reload()))
 }
 
 export function useMembers(groupId: number) {

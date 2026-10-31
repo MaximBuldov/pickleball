@@ -83,3 +83,17 @@ body {
   color: #15803d;
   font-weight: 600;
 }
+
+/* Native pull-to-refresh in Android Chrome would reload the whole app; ours refetches data only */
+html {
+  overscroll-behavior-y: contain;
+}
+
+.ptr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #15803d;
+  transition: height 0.15s ease-out;
+}
