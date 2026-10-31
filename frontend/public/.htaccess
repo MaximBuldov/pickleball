@@ -1,8 +1,8 @@
 RewriteEngine On
 
-# Force HTTPS — enable once the subdomain has an SSL certificate
-# RewriteCond %{HTTPS} off
-# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # API is handled by api/.htaccess
 RewriteRule ^api(/|$) - [L]

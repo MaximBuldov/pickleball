@@ -42,7 +42,7 @@ jobs:
           mkdir -p release
           cp -r frontend/dist release/web
           cp -r deploy/api release/web/api
-          rsync -a --exclude tests --exclude var --exclude config.php --exclude .phpunit.cache backend/ release/backend/
+          rsync -a --exclude /tests --exclude /var --exclude /config.php --exclude .phpunit.cache backend/ release/backend/
 
       - uses: actions/upload-artifact@v4
         with:
@@ -75,7 +75,7 @@ jobs:
           WEB_ROOT: ${{ vars.WEB_ROOT || 'pickleball.buldov.com' }}
         run: |
           # Backend: config.php and var/ on the server are never touched
-          rsync -az --delete -e "$SSH" --exclude config.php --exclude var/ release/backend/ "$TARGET:pickleball-backend/"
+          rsync -az --delete -e "$SSH" --exclude /config.php --exclude /var/ release/backend/ "$TARGET:pickleball-backend/"
           # Frontend + API entry; keep cPanel's own folders
           rsync -az --delete -e "$SSH" --exclude .well-known --exclude cgi-bin release/web/ "$TARGET:$WEB_ROOT/"
 

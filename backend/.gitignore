@@ -1,4 +1,4 @@
 vendor/
-config.php
+/config.php
 var/
 .phpunit.cache/
