@@ -15,6 +15,15 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* iOS zooms into any focused field with text under 16px */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 .app {
   max-width: 640px;
   margin: 0 auto;
