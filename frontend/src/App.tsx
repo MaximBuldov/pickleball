@@ -18,7 +18,8 @@ export function App() {
 
   return (
     <Routes>
-      <Route path="/invite/:token" element={<InvitePage />} />
+      {/* Once the invite is accepted the user is signed in and the (now used) link must not be re-checked */}
+      <Route path="/invite/:token" element={user ? <Navigate to="/" replace /> : <InvitePage />} />
       {user ? (
         <Route element={<Layout />}>
           <Route index element={<TodayPage />} />

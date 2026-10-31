@@ -1,6 +1,6 @@
 import { Alert, Button, Form, Input, Spin, Typography } from 'antd'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAction, useLoad } from '../hooks'
 import { useSession } from '../session'
@@ -9,7 +9,6 @@ import { AuthShell } from './LoginPage'
 export function InvitePage() {
   const { token = '' } = useParams()
   const { signIn } = useSession()
-  const navigate = useNavigate()
   const run = useAction()
   const [saving, setSaving] = useState(false)
   const invite = useLoad(() => api.inviteInfo(token), [token])
@@ -18,8 +17,9 @@ export function InvitePage() {
     setSaving(true)
     const res = await run(() => api.acceptInvite(token, email, password))
     if (res) {
+      // Signing in unmounts this page; App then redirects /invite/* to the home screen.
       await signIn(res.token)
-      navigate('/', { replace: true })
+      return
     }
     setSaving(false)
   }
