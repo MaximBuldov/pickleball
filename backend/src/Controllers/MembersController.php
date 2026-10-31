@@ -103,7 +103,13 @@ final class MembersController extends Controller
         if ($userId === (int) Auth::user($request)['id']) {
             throw HttpError::badRequest('You cannot remove yourself');
         }
-        $this->db->exec('DELETE FROM group_members WHERE group_id = ? AND user_id = ?', [$groupId, $userId]);
+        $this->db->transaction(function () use ($groupId, $userId) {
+            $this->db->exec('DELETE FROM group_members WHERE group_id = ? AND user_id = ?', [$groupId, $userId]);
+            $this->db->exec(
+                'DELETE FROM game_day_players WHERE user_id = ? AND game_day_id IN (SELECT id FROM game_days WHERE group_id = ?)',
+                [$userId, $groupId],
+            );
+        });
         return $this->json($response, ['ok' => true]);
     }
 

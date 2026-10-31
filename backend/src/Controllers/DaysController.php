@@ -105,19 +105,36 @@ final class DaysController extends Controller
             return ['date' => $date, 'player_ids' => [], 'pairs' => [], 'pairs_manual' => false, 'matches' => []];
         }
         $round = $this->latestRound((int) $day['id']);
+        $playerIds = $this->attendeeIds((int) $day['id']);
+        // Players removed from the group since the round was drawn drop out of its pairs.
+        $members = array_flip(array_map('intval', array_column(
+            $this->db->all('SELECT user_id FROM group_members WHERE group_id = ?', [$groupId]),
+            'user_id',
+        )));
+        $pairs = array_values(array_filter(array_map(
+            fn ($pair) => array_values(array_filter($pair, fn ($id) => isset($members[$id]))),
+            $round['pairs'] ?? [],
+        )));
         return [
             'date' => $date,
-            'player_ids' => $this->attendeeIds((int) $day['id']),
-            'pairs' => $round['pairs'] ?? [],
+            'player_ids' => $playerIds,
+            'pairs' => $pairs,
             'pairs_manual' => $round['is_manual'] ?? false,
             'matches' => $matches->format($matches->rows($groupId, gameDayId: (int) $day['id'])),
         ];
     }
 
+    /** Attendees who are still members of the day's group. */
     private function attendeeIds(int $gameDayId): array
     {
         return array_map('intval', array_column(
-            $this->db->all('SELECT user_id FROM game_day_players WHERE game_day_id = ? ORDER BY user_id', [$gameDayId]),
+            $this->db->all(
+                'SELECT p.user_id FROM game_day_players p
+                 JOIN game_days d ON d.id = p.game_day_id
+                 JOIN group_members gm ON gm.group_id = d.group_id AND gm.user_id = p.user_id
+                 WHERE p.game_day_id = ? ORDER BY p.user_id',
+                [$gameDayId],
+            ),
             'user_id',
         ));
     }
