@@ -73,7 +73,7 @@ function PlayersCard({ members, loading, reload }: { members: Member[]; loading:
 
       <Flex vertical>
         {members.map((m) => (
-          <Flex key={m.id} align="center" gap={8} style={{ padding: '8px 0', borderTop: '1px solid #f0f0f0' }}>
+          <Flex key={m.id} align="center" gap={8} style={{ padding: '8px 0', borderTop: '1px solid var(--pb-border)' }}>
             <Flex vertical style={{ flex: 1, minWidth: 0 }}>
               <Typography.Text strong ellipsis>
                 {m.name} {m.role === 'admin' && <Tag color="gold">admin</Tag>}

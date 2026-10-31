@@ -1,6 +1,6 @@
-import { Spin } from 'antd'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './Layout'
+import { Loading } from './Loading'
 import { AdminPage } from './pages/AdminPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { InvitePage } from './pages/InvitePage'
@@ -13,7 +13,7 @@ export function App() {
   const { user, loading, isAdmin } = useSession()
 
   if (loading) {
-    return <Spin size="large" style={{ display: 'block', marginTop: '40vh' }} />
+    return <Loading fullScreen />
   }
 
   return (

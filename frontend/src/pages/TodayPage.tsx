@@ -1,10 +1,11 @@
 import { PlusOutlined, ThunderboltOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Card, DatePicker, Empty, Flex, Modal, Select, Spin, Tag, Typography } from 'antd'
+import { Button, Card, DatePicker, Empty, Flex, Modal, Select, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { api, type GameDay, type Match, type Member, type Pair } from '../api'
 import { MatchCard } from '../components/MatchCard'
 import { MatchForm } from '../components/MatchForm'
+import { Loading } from '../Loading'
 import { useAction, useLoad, useMembers } from '../hooks'
 import { useGroup } from '../session'
 import { today } from '../util'
@@ -21,7 +22,7 @@ export function TodayPage() {
   const [spinning, setSpinning] = useState(false)
 
   if (!members.data || !day.data) {
-    return <Spin style={{ display: 'block', marginTop: 48 }} />
+    return <Loading />
   }
   const d = day.data
   const allMembers = members.data
@@ -64,7 +65,7 @@ export function TodayPage() {
               key={m.id}
               checked={d.player_ids.includes(m.id)}
               onChange={() => togglePlayer(m.id)}
-              style={{ fontSize: 15, padding: '6px 12px', border: '1px solid #d9d9d9', marginInlineEnd: 0 }}
+              style={{ fontSize: 15, padding: '6px 12px', border: '1px solid var(--pb-border-strong)', marginInlineEnd: 0 }}
             >
               {m.name}
               {m.status === 'guest' && <span style={{ opacity: 0.6 }}> · guest</span>}

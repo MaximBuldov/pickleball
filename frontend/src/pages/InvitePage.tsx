@@ -1,8 +1,9 @@
-import { Alert, Button, Form, Input, Spin, Typography } from 'antd'
+import { Alert, Button, Form, Input, Typography } from 'antd'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAction, useLoad } from '../hooks'
+import { Loading } from '../Loading'
 import { useSession } from '../session'
 import { AuthShell } from './LoginPage'
 
@@ -27,7 +28,7 @@ export function InvitePage() {
   return (
     <AuthShell>
       {invite.loading ? (
-        <Spin style={{ display: 'block' }} />
+        <Loading />
       ) : invite.error || !invite.data ? (
         <Alert type="error" title={invite.error} />
       ) : (

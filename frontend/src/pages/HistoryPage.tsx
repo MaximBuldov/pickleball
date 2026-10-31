@@ -1,8 +1,9 @@
-import { DatePicker, Empty, Flex, Spin, Typography } from 'antd'
+import { DatePicker, Empty, Flex, Typography } from 'antd'
 import { useState } from 'react'
 import { api, type DateRange, type Match } from '../api'
 import { MatchCard } from '../components/MatchCard'
 import { MatchForm } from '../components/MatchForm'
+import { Loading } from '../Loading'
 import { useAction, useLoad, useMembers } from '../hooks'
 import { useGroup } from '../session'
 import { formatDate } from '../util'
@@ -32,7 +33,7 @@ export function HistoryPage() {
         style={{ width: '100%' }}
       />
       {matches.loading && !matches.data ? (
-        <Spin style={{ display: 'block', marginTop: 48 }} />
+        <Loading />
       ) : byDate.size === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No matches" />
       ) : (

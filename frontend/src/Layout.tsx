@@ -1,14 +1,25 @@
-import { BarChartOutlined, HistoryOutlined, LogoutOutlined, ReloadOutlined, SettingOutlined, TrophyOutlined } from '@ant-design/icons'
+import {
+  BarChartOutlined,
+  HistoryOutlined,
+  LogoutOutlined,
+  MoonOutlined,
+  ReloadOutlined,
+  SettingOutlined,
+  SunOutlined,
+  TrophyOutlined,
+} from '@ant-design/icons'
 import { Button, Flex, Select, Typography } from 'antd'
 import { useCallback, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { refreshAll } from './hooks'
 import { PullToRefresh } from './PullToRefresh'
 import { useSession } from './session'
+import { useThemeMode } from './theme'
 
 export function Layout() {
   const { user, groups, group, isAdmin, selectGroup, signOut, reload } = useSession()
   const [refreshing, setRefreshing] = useState(false)
+  const { mode, toggle } = useThemeMode()
 
   const refresh = useCallback(async () => {
     setRefreshing(true)
@@ -49,6 +60,12 @@ export function Layout() {
             {user?.name}
           </Typography.Text>
           <Button type="text" icon={<ReloadOutlined spin={refreshing} />} onClick={refresh} aria-label="Refresh" />
+          <Button
+            type="text"
+            icon={mode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+            onClick={toggle}
+            aria-label={mode === 'dark' ? 'Light mode' : 'Dark mode'}
+          />
           <Button type="text" icon={<LogoutOutlined />} onClick={signOut} aria-label="Sign out" />
         </Flex>
       </header>

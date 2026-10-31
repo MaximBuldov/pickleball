@@ -9,6 +9,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Pickleball" />
     <title>Pickleball</title>
+    <script>
+      // Apply the saved/system theme before React loads to avoid a light flash.
+      try {
+        var t = localStorage.getItem('pb_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

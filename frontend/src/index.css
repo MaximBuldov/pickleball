@@ -1,7 +1,23 @@
 :root {
   --nav-height: 60px;
   --header-height: 52px;
-  --border: #f0f0f0;
+  --pb-bg: #f5f5f5;
+  --pb-surface: #fff;
+  --pb-border: #f0f0f0;
+  --pb-border-strong: #d9d9d9;
+  --pb-muted: #8c8c8c;
+  --pb-accent: #15803d;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --pb-bg: #000;
+  --pb-surface: #141414;
+  --pb-border: #303030;
+  --pb-border-strong: #424242;
+  --pb-muted: #8c8c8c;
+  --pb-accent: #22a052;
+  color-scheme: dark;
 }
 
 * {
@@ -11,7 +27,7 @@
 html,
 body {
   margin: 0;
-  background: #f5f5f5;
+  background: var(--pb-bg);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -40,8 +56,8 @@ body {
   gap: 8px;
   height: calc(var(--header-height) + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) 12px 0 16px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
+  background: var(--pb-surface);
+  border-bottom: 1px solid var(--pb-border);
 }
 
 .app-main {
@@ -59,8 +75,8 @@ body {
   max-width: 640px;
   height: calc(var(--nav-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: #fff;
-  border-top: 1px solid var(--border);
+  background: var(--pb-surface);
+  border-top: 1px solid var(--pb-border);
 }
 
 .app-nav a {
@@ -71,7 +87,7 @@ body {
   justify-content: center;
   gap: 2px;
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--pb-muted);
   text-decoration: none;
 }
 
@@ -80,7 +96,7 @@ body {
 }
 
 .app-nav a.active {
-  color: #15803d;
+  color: var(--pb-accent);
   font-weight: 600;
 }
 
@@ -94,6 +110,6 @@ html {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: #15803d;
+  color: var(--pb-accent);
   transition: height 0.15s ease-out;
 }

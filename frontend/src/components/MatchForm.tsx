@@ -87,7 +87,7 @@ export function MatchForm({ open, members, pairs = [], preferredIds = [], match,
                   key={pair.join('-')}
                   checked={isPicked(pair)}
                   onChange={() => pickPair(pair)}
-                  style={{ fontSize: 14, padding: '4px 10px', border: '1px solid #d9d9d9' }}
+                  style={{ fontSize: 14, padding: '4px 10px', border: '1px solid var(--pb-border-strong)' }}
                 >
                   {pair.map(name).join(' & ')}
                 </Tag.CheckableTag>
