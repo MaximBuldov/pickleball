@@ -97,12 +97,29 @@ final class DaysController extends Controller
         return $this->json($response, $this->dayPayload($groupId, $date));
     }
 
+    /** Undo for a roulette spin: removes that round so the previous pairs are current again. */
+    public function deleteRound(Request $request, Response $response, array $args): Response
+    {
+        $groupId = (int) $args['gid'];
+        $date = Input::date($args['date']);
+        Auth::requireMember($this->db, $request, $groupId);
+        $day = (new Matches($this->db))->gameDay($groupId, $date);
+        $deleted = $day === null ? 0 : $this->db->exec(
+            'DELETE FROM roulette_rounds WHERE id = ? AND game_day_id = ?',
+            [(int) $args['id'], $day['id']],
+        );
+        if ($deleted === 0) {
+            throw HttpError::notFound('These pairs were already changed');
+        }
+        return $this->json($response, $this->dayPayload($groupId, $date));
+    }
+
     private function dayPayload(int $groupId, string $date): array
     {
         $matches = new Matches($this->db);
         $day = $matches->gameDay($groupId, $date);
         if ($day === null) {
-            return ['date' => $date, 'player_ids' => [], 'pairs' => [], 'pairs_manual' => false, 'matches' => []];
+            return ['date' => $date, 'player_ids' => [], 'round_id' => null, 'pairs' => [], 'pairs_manual' => false, 'matches' => []];
         }
         $round = $this->latestRound((int) $day['id']);
         $playerIds = $this->attendeeIds((int) $day['id']);
@@ -118,6 +135,7 @@ final class DaysController extends Controller
         return [
             'date' => $date,
             'player_ids' => $playerIds,
+            'round_id' => $round['id'] ?? null,
             'pairs' => $pairs,
             'pairs_manual' => $round['is_manual'] ?? false,
             'matches' => $matches->format($matches->rows($groupId, gameDayId: (int) $day['id'])),
@@ -141,8 +159,8 @@ final class DaysController extends Controller
 
     private function latestRound(int $gameDayId): ?array
     {
-        $row = $this->db->one('SELECT pairs, is_manual FROM roulette_rounds WHERE game_day_id = ? ORDER BY id DESC LIMIT 1', [$gameDayId]);
-        return $row === null ? null : ['pairs' => json_decode($row['pairs'], true), 'is_manual' => (bool) $row['is_manual']];
+        $row = $this->db->one('SELECT id, pairs, is_manual FROM roulette_rounds WHERE game_day_id = ? ORDER BY id DESC LIMIT 1', [$gameDayId]);
+        return $row === null ? null : ['id' => (int) $row['id'], 'pairs' => json_decode($row['pairs'], true), 'is_manual' => (bool) $row['is_manual']];
     }
 
     private function saveRound(int $gameDayId, array $pairs, bool $manual, int $userId): void

@@ -44,6 +44,8 @@ export type Pair = number[]
 export interface GameDay {
   date: string
   player_ids: number[]
+  /** Latest roulette/manual round; null when no pairs were drawn yet. */
+  round_id: number | null
   pairs: Pair[]
   pairs_manual: boolean
   matches: Match[]
@@ -165,6 +167,8 @@ export const api = {
     request<GameDay>('PUT', `/groups/${gid}/days/${date}/players`, { player_ids: playerIds }),
   roulette: (gid: number, date: string) => request<GameDay>('POST', `/groups/${gid}/days/${date}/roulette`),
   setPairs: (gid: number, date: string, pairs: Pair[]) => request<GameDay>('PUT', `/groups/${gid}/days/${date}/pairs`, { pairs }),
+  deleteRound: (gid: number, date: string, roundId: number) =>
+    request<GameDay>('DELETE', `/groups/${gid}/days/${date}/rounds/${roundId}`),
 
   matches: (gid: number, range: DateRange) => request<Match[]>('GET', `/groups/${gid}/matches${query({ ...range })}`),
   createMatch: (gid: number, data: MatchInput) => request<Match>('POST', `/groups/${gid}/matches`, data),

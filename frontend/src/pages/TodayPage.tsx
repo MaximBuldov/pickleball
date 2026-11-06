@@ -1,5 +1,5 @@
 import { PlusOutlined, ThunderboltOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Card, DatePicker, Empty, Flex, Modal, Select, Tag, Typography } from 'antd'
+import { App, Button, Card, DatePicker, Empty, Flex, Modal, Segmented, Select, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { api, type GameDay, type Match, type Member, type Pair } from '../api'
@@ -10,9 +10,18 @@ import { useAction, useLoad, useMembers } from '../hooks'
 import { useGroup } from '../session'
 import { today } from '../util'
 
+type Tab = 'setup' | 'play'
+
+const UNDO_KEY = 'roulette-undo'
+
+/**
+ * Setup: who came + roulette. Play: pairs + matches, with no roulette button,
+ * so a stray tap during play can't reshuffle the pairs.
+ */
 export function TodayPage() {
   const group = useGroup()
   const run = useAction()
+  const { message } = App.useApp()
   const [date, setDate] = useState(today())
   const members = useMembers(group.id)
   const day = useLoad(() => api.day(group.id, date), [group.id, date])
@@ -20,12 +29,15 @@ export function TodayPage() {
   const [editing, setEditing] = useState<Match | null>(null)
   const [pairsOpen, setPairsOpen] = useState(false)
   const [spinning, setSpinning] = useState(false)
+  // null = pick automatically: Play once pairs exist, otherwise Setup.
+  const [tabChoice, setTabChoice] = useState<Tab | null>(null)
 
   if (!members.data || !day.data) {
     return <Loading />
   }
   const d = day.data
   const allMembers = members.data
+  const tab: Tab = tabChoice ?? (d.pairs.length ? 'play' : 'setup')
   const name = (id: number) => allMembers.find((m) => m.id === id)?.name ?? '?'
   const update = (next: GameDay | undefined) => next && day.setData(next)
 
@@ -37,70 +49,68 @@ export function TodayPage() {
     else void day.reload()
   }
 
-  const spin = async () => {
-    setSpinning(true)
-    update(await run(() => api.roulette(group.id, date)))
-    setSpinning(false)
+  const undo = async (roundId: number) => {
+    message.destroy(UNDO_KEY)
+    const next = await run(() => api.deleteRound(group.id, date, roundId), 'Previous pairs restored')
+    if (next) {
+      day.setData(next)
+      if (!next.pairs.length) setTabChoice('setup')
+    }
   }
 
-  return (
-    <Flex vertical gap={12}>
-      <Flex justify="space-between" align="center">
-        <Typography.Title level={4} style={{ margin: 0 }}>
-          {date === today() ? 'Today' : 'Game day'}
-        </Typography.Title>
-        <DatePicker
-          value={dayjs(date)}
-          allowClear={false}
-          inputReadOnly
-          format="D MMM YYYY"
-          onChange={(v) => v && setDate(v.format('YYYY-MM-DD'))}
-        />
-      </Flex>
-
-      <Card size="small" title={`Who's here (${d.player_ids.length})`}>
-        <Flex wrap gap={8}>
-          {allMembers.map((m) => (
-            <Tag.CheckableTag
-              key={m.id}
-              checked={d.player_ids.includes(m.id)}
-              onChange={() => togglePlayer(m.id)}
-              style={{ fontSize: 15, padding: '6px 12px', border: '1px solid var(--pb-border-strong)', marginInlineEnd: 0 }}
-            >
-              {m.name}
-              {m.status === 'guest' && <span style={{ opacity: 0.6 }}> · guest</span>}
-            </Tag.CheckableTag>
-          ))}
-        </Flex>
-      </Card>
-
-      <Card
-        size="small"
-        title={d.pairs_manual ? 'Pairs (set by hand)' : 'Pairs'}
-        extra={
-          <Button size="small" type="text" icon={<EditOutlined />} onClick={() => setPairsOpen(true)}>
-            Edit
+  const spin = async () => {
+    setSpinning(true)
+    const next = await run(() => api.roulette(group.id, date))
+    setSpinning(false)
+    if (!next) return
+    day.setData(next)
+    setTabChoice('play')
+    message.open({
+      key: UNDO_KEY,
+      type: 'success',
+      duration: 6,
+      content: (
+        <span>
+          New pairs drawn
+          <Button type="link" size="small" onClick={() => next.round_id && undo(next.round_id)}>
+            Undo
           </Button>
-        }
-      >
-        {d.pairs.length > 0 ? (
-          <Flex vertical gap={6}>
-            {d.pairs.map((pair, i) =>
-              pair.length === 2 ? (
-                <Typography.Text key={pair.join('-')} style={{ fontSize: 16 }}>
-                  <Tag color="green">{i + 1}</Tag>
-                  {pair.map(name).join(' & ')}
-                </Typography.Text>
-              ) : (
-                <Typography.Text key={pair.join('-')} type="secondary">
-                  Without a pair: {name(pair[0])}
-                </Typography.Text>
-              ),
-            )}
-          </Flex>
-        ) : (
-          <Typography.Text type="secondary">Select who's here and spin the roulette.</Typography.Text>
-        )}
+        </span>
+      ),
+    })
+  }
+
+  const pairsCard = (
+    <Card
+      size="small"
+      title={d.pairs_manual ? 'Pairs (set by hand)' : 'Pairs'}
+      extra={
+        <Button size="small" type="text" icon={<EditOutlined />} onClick={() => setPairsOpen(true)}>
+          Edit
+        </Button>
+      }
+    >
+      {d.pairs.length > 0 ? (
+        <Flex vertical gap={6}>
+          {d.pairs.map((pair, i) =>
+            pair.length === 2 ? (
+              <Typography.Text key={pair.join('-')} style={{ fontSize: 16 }}>
+                <Tag color="green">{i + 1}</Tag>
+                {pair.map(name).join(' & ')}
+              </Typography.Text>
+            ) : (
+              <Typography.Text key={pair.join('-')} type="secondary">
+                Without a pair: {name(pair[0])}
+              </Typography.Text>
+            ),
+          )}
+        </Flex>
+      ) : (
+        <Typography.Text type="secondary">
+          {tab === 'setup' ? "Select who's here and spin the roulette." : 'No pairs yet. Spin the roulette in Setup.'}
+        </Typography.Text>
+      )}
+      {tab === 'setup' && (
         <Button
           type="primary"
           block
@@ -113,30 +123,84 @@ export function TodayPage() {
         >
           {d.pairs.length ? 'Spin again' : 'Roulette'}
         </Button>
-      </Card>
+      )}
+    </Card>
+  )
 
-      <Flex justify="space-between" align="center" style={{ marginTop: 4 }}>
-        <Typography.Title level={5} style={{ margin: 0 }}>
-          Matches ({d.matches.length})
+  return (
+    <Flex vertical gap={12}>
+      <Flex justify="space-between" align="center">
+        <Typography.Title level={4} style={{ margin: 0 }}>
+          {date === today() ? 'Today' : 'Game day'}
         </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setFormOpen(true)}>
-          Add match
-        </Button>
+        <DatePicker
+          value={dayjs(date)}
+          allowClear={false}
+          inputReadOnly
+          format="D MMM YYYY"
+          onChange={(v) => {
+            if (!v) return
+            setDate(v.format('YYYY-MM-DD'))
+            setTabChoice(null)
+          }}
+        />
       </Flex>
-      {d.matches.length ? (
-        d.matches.map((m) => (
-          <MatchCard
-            key={m.id}
-            match={m}
-            onEdit={(match) => {
-              setEditing(match)
-              setFormOpen(true)
-            }}
-            onDeleted={day.reload}
-          />
-        ))
+
+      <Segmented<Tab>
+        block
+        size="large"
+        value={tab}
+        onChange={setTabChoice}
+        options={[
+          { label: `Setup (${d.player_ids.length})`, value: 'setup' },
+          { label: `Play (${d.matches.length})`, value: 'play' },
+        ]}
+      />
+
+      {tab === 'setup' ? (
+        <>
+          <Card size="small" title={`Who's here (${d.player_ids.length})`}>
+            <Flex wrap gap={8}>
+              {allMembers.map((m) => (
+                <Tag.CheckableTag
+                  key={m.id}
+                  checked={d.player_ids.includes(m.id)}
+                  onChange={() => togglePlayer(m.id)}
+                  style={{ fontSize: 15, padding: '6px 12px', border: '1px solid var(--pb-border-strong)', marginInlineEnd: 0 }}
+                >
+                  {m.name}
+                  {m.status === 'guest' && <span style={{ opacity: 0.6 }}> · guest</span>}
+                </Tag.CheckableTag>
+              ))}
+            </Flex>
+          </Card>
+          {pairsCard}
+        </>
       ) : (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No matches yet" />
+        <>
+          {pairsCard}
+          <Button type="primary" block size="large" icon={<PlusOutlined />} onClick={() => setFormOpen(true)}>
+            Add match
+          </Button>
+          <Typography.Title level={5} style={{ margin: '4px 0 0' }}>
+            Matches ({d.matches.length})
+          </Typography.Title>
+          {d.matches.length ? (
+            d.matches.map((m) => (
+              <MatchCard
+                key={m.id}
+                match={m}
+                onEdit={(match) => {
+                  setEditing(match)
+                  setFormOpen(true)
+                }}
+                onDeleted={day.reload}
+              />
+            ))
+          ) : (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No matches yet" />
+          )}
+        </>
       )}
 
       <MatchForm
@@ -166,6 +230,7 @@ export function TodayPage() {
         onSave={async (pairs) => {
           const next = await run(() => api.setPairs(group.id, date, pairs), 'Pairs saved')
           update(next)
+          if (next?.pairs.length) setTabChoice('play')
           return !!next
         }}
       />

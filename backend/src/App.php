@@ -50,6 +50,7 @@ final class App
                 $g->put('/days/{date}/players', [$days, 'setPlayers']);
                 $g->post('/days/{date}/roulette', [$days, 'roulette']);
                 $g->put('/days/{date}/pairs', [$days, 'setPairs']);
+                $g->delete('/days/{date}/rounds/{id:\d+}', [$days, 'deleteRound']);
 
                 $g->get('/matches', [$matches, 'list']);
                 $g->post('/matches', [$matches, 'create']);
