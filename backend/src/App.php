@@ -60,6 +60,7 @@ final class App
 
                 $g->get('/stats/pairs', [$stats, 'pairs']);
                 $g->get('/stats/players', [$stats, 'players']);
+                $g->get('/stats/players/{uid:\d+}', [$stats, 'player']);
             });
 
             $r->get('/admin/groups', [$admin, 'groups']);

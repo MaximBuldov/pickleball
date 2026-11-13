@@ -1,6 +1,7 @@
 import {
-  BarChartOutlined,
+  CalendarOutlined,
   HistoryOutlined,
+  LineChartOutlined,
   LogoutOutlined,
   MoonOutlined,
   ReloadOutlined,
@@ -29,9 +30,10 @@ export function Layout() {
   }, [reload])
 
   const tabs = [
-    { to: '/', label: 'Today', icon: <TrophyOutlined /> },
+    { to: '/', label: 'Today', icon: <CalendarOutlined /> },
     { to: '/history', label: 'History', icon: <HistoryOutlined /> },
-    { to: '/stats', label: 'Stats', icon: <BarChartOutlined /> },
+    { to: '/leaderboard', label: 'Leaders', icon: <TrophyOutlined /> },
+    { to: '/stats', label: 'Stats', icon: <LineChartOutlined /> },
     ...(isAdmin ? [{ to: '/admin', label: 'Admin', icon: <SettingOutlined /> }] : []),
   ]
 

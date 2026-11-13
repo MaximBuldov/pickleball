@@ -10,9 +10,10 @@ type Tab = 'pairs' | 'players'
 interface Row extends Totals {
   key: string
   name: string
+  rating?: number
 }
 
-export function StatsPage() {
+export function LeaderboardPage() {
   const group = useGroup()
   const [tab, setTab] = useState<Tab>('pairs')
   const [range, setRange] = useState<DateRange>({})
@@ -24,7 +25,7 @@ export function StatsPage() {
       return rows.map((r) => ({ ...r, key: r.players.map((p) => p.id).join('-'), name: r.players.map((p) => p.name).join(' & ') }))
     }
     const rows = await api.playerStats(group.id, range)
-    return rows.map((r) => ({ ...r, key: String(r.player.id), name: r.player.name }))
+    return rows.map((r) => ({ ...r, key: String(r.player.id), name: r.player.name, rating: r.rating }))
   }, [group.id, tab, range])
 
   const winRate = (r: Row) => (r.games >= minGames && r.games > 0 ? r.wins / r.games : null)
@@ -37,6 +38,9 @@ export function StatsPage() {
       width: tab === 'pairs' ? 130 : 100,
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
+    ...(tab === 'players'
+      ? [{ title: 'Rating', dataIndex: 'rating', align: 'right' as const, sorter: (a: Row, b: Row) => (a.rating ?? 0) - (b.rating ?? 0) }]
+      : []),
     { title: 'W', dataIndex: 'wins', align: 'right', defaultSortOrder: 'descend', sorter: (a, b) => a.wins - b.wins || b.losses - a.losses },
     { title: 'L', dataIndex: 'losses', align: 'right', sorter: (a, b) => a.losses - b.losses },
     { title: 'G', dataIndex: 'games', align: 'right', sorter: (a, b) => a.games - b.games },
@@ -81,7 +85,7 @@ export function StatsPage() {
   return (
     <Flex vertical gap={12}>
       <Typography.Title level={4} style={{ margin: 0 }}>
-        Stats
+        Leaderboard
       </Typography.Title>
       <Segmented<Tab>
         block
@@ -117,6 +121,7 @@ export function StatsPage() {
       />
       <Typography.Text type="secondary" style={{ fontSize: 12 }}>
         W/L — wins/losses, G — games, Diff — points scored minus conceded, Pts — points scored:conceded.
+        {tab === 'players' && ' Rating — all-time Elo (start 1000), accounts for partner and opponent strength.'}
       </Typography.Text>
     </Flex>
   )

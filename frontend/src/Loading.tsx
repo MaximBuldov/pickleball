@@ -4,7 +4,7 @@ import { Spin } from 'antd'
 export function Loading({ fullScreen = false }: { fullScreen?: boolean }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: fullScreen ? '100dvh' : 160 }}>
-      <Spin size={fullScreen ? 'large' : 'default'} />
+      <Spin size={fullScreen ? 'large' : 'medium'} />
     </div>
   )
 }

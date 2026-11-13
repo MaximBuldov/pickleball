@@ -5,7 +5,8 @@ import { AdminPage } from './pages/AdminPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { InvitePage } from './pages/InvitePage'
 import { LoginPage } from './pages/LoginPage'
-import { StatsPage } from './pages/StatsPage'
+import { LeaderboardPage } from './pages/LeaderboardPage'
+import { PlayerStatsPage } from './pages/PlayerStatsPage'
 import { TodayPage } from './pages/TodayPage'
 import { useSession } from './session'
 
@@ -24,7 +25,8 @@ export function App() {
         <Route element={<Layout />}>
           <Route index element={<TodayPage />} />
           <Route path="history" element={<HistoryPage />} />
-          <Route path="stats" element={<StatsPage />} />
+          <Route path="leaderboard" element={<LeaderboardPage />} />
+          <Route path="stats" element={<PlayerStatsPage />} />
           {isAdmin && <Route path="admin" element={<AdminPage />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

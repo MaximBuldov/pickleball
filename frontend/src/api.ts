@@ -82,6 +82,28 @@ export interface PairStat extends Totals {
 
 export interface PlayerStat extends Totals {
   player: PlayerRef
+  /** All-time Elo rating, regardless of the date filter. */
+  rating: number
+}
+
+export interface PlayerDay {
+  date: string
+  games: number
+  wins: number
+  points_for: number
+  points_against: number
+  /** Elo rating at the end of that day. */
+  rating: number
+}
+
+export interface PlayerProgress {
+  player: PlayerRef
+  rating: number
+  rating_change: number
+  totals: Totals
+  /** Partners' win rate with this player vs. in their games without them; null without data. */
+  partner_effect: { games: number; with_rate: number; without_rate: number } | null
+  days: PlayerDay[]
 }
 
 export interface MatchInput {
@@ -180,6 +202,8 @@ export const api = {
   pairStats: (gid: number, range: DateRange) => request<PairStat[]>('GET', `/groups/${gid}/stats/pairs${query({ ...range })}`),
   playerStats: (gid: number, range: DateRange) =>
     request<PlayerStat[]>('GET', `/groups/${gid}/stats/players${query({ ...range })}`),
+  playerProgress: (gid: number, uid: number, range: DateRange) =>
+    request<PlayerProgress>('GET', `/groups/${gid}/stats/players/${uid}${query({ ...range })}`),
 
   adminGroups: () => request<{ id: number; name: string; members: number }[]>('GET', '/admin/groups'),
   createGroup: (name: string) => request<{ id: number }>('POST', '/admin/groups', { name }),
